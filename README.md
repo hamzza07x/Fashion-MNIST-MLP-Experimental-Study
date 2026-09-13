@@ -26,8 +26,8 @@ An empirical study of **Multi-Layer Perceptrons (MLPs)** using Fashion-MNIST, co
 
 | Contributor  | Student ID | Section | Contribution                                                                  |
 | ------------ | ---------- | ------- | ----------------------------------------------------------------------------- |
-| **M. Hamza** | 23P-XXX    | BCS-7E  | Architecture Engineering, NumPy Autograd, Regularization & Cross-Validation   |
-| **M. Talha** | 23F-0562   | BCS-7E  | Activation Dynamics, Optimizer Benchmarks, Hyperparameter Tuning & Evaluation |
+| **Muhammad Hamza** | 23P-0577    | BCS-7E  | Architecture Engineering, NumPy Autograd, Regularization & Cross-Validation   |
+| **Muhammad Talha** | 23F-0562   | BCS-7E  | Activation Dynamics, Optimizer Benchmarks, Hyperparameter Tuning & Evaluation |
 
 ---
 
@@ -44,7 +44,6 @@ An empirical study of **Multi-Layer Perceptrons (MLPs)** using Fashion-MNIST, co
   * [Part 5 — Controlled Overfitting](#part-5--controlled-overfitting)
   * [Part 6 — Regularization Ablation](#part-6--regularization-ablation)
   * [Part 7 — Hyperparameter Tuning](#part-7--hyperparameter-tuning)
-* [Repository Structure](#repository-structure)
 * [Installation](#installation)
 * [Reproduction Guide](#reproduction-guide)
 * [Citation](#citation)
@@ -356,41 +355,7 @@ The selected architecture was then retrained using the complete 48,000-sample tr
 
 The final tuned model improved upon the Part 2 baseline by **0.97 percentage points**.
 
----
 
-# Repository Structure
-
-```text
-.
-├── README.md
-├── requirements.txt
-├── environment.yml
-│
-├── data/
-│   ├── fashion-mnist_train.csv
-│   └── fashion-mnist_test.csv
-│
-├── src/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── data_loader.py
-│   ├── numpy_mlp.py
-│   ├── models.py
-│   ├── trainer.py
-│   └── utils.py
-│
-├── experiments/
-│   ├── run_part1_grad_check.py
-│   ├── run_part2_activations.py
-│   ├── run_part3_loss_regression.py
-│   ├── run_part4_optimizers.py
-│   ├── run_part5_overfitting_gap.py
-│   ├── run_part6_regularization.py
-│   └── run_part7_kfold_tuning.py
-│
-└── notebooks/
-    └── DLP_Assignment01.ipynb
-```
 
 ### Source Modules
 
