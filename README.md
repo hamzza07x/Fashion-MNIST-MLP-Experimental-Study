@@ -1,207 +1,446 @@
-# Deep Learning for Perception — Assignment 1: Fashion-MNIST MLP Experimental Study[cite: 3]
+# Deep Learning for Perception — Assignment 1
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+## Fashion-MNIST MLP Experimental Study
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+An empirical study of **Multi-Layer Perceptrons (MLPs)** using Fashion-MNIST, covering manual backpropagation, activation functions, loss functions, optimizers, overfitting, regularization, and hyperparameter tuning.
+
 ---
 
-### Project & Contributor Metadata[cite: 3]
-* **Course:** Deep Learning for Perception (BCS-7E)[cite: 3]
-* **Assignment:** Assignment No. 1 — Multi-Layer Perceptron Mechanics, Optimizers, Regularization & Hyperparameter Search[cite: 3]
-* **Submission Date:** September 13, 2026[cite: 3]
-* **Compute Environment:** NVIDIA Tesla T4 GPU, Fixed Random Seed = 42[cite: 1, 3]
+## Project Information
 
-| Contributor Name | Student Roll / Registration ID | Section | Contribution Role |
-| :--- | :--- | :--- | :--- |
-| **M. Hamza**[cite: 3] | 23P-[cite: 3] | BCS-7E[cite: 3] | Architecture Engineering, NumPy Autograd, Regularization & Cross-Validation[cite: 3] |
-| **M. Talha**[cite: 3] | 23F-0562[cite: 3] | BCS-7E[cite: 3] | Activation Dynamics, Optimizer Benchmarks, Hyperparameter Tuning & Evaluation[cite: 3] |
+|                     | Details                                                                          |
+| ------------------- | -------------------------------------------------------------------------------- |
+| **Course**          | Deep Learning for Perception (BCS-7E)                                            |
+| **Assignment**      | Assignment 1 — MLP Mechanics, Optimizers, Regularization & Hyperparameter Search |
+| **Submission Date** | September 13, 2026                                                               |
+| **Framework**       | PyTorch 2.0+                                                                     |
+| **Python**          | 3.10+                                                                            |
+| **Compute**         | NVIDIA Tesla T4 GPU                                                              |
+| **Random Seed**     | 42                                                                               |
+
+### Contributors
+
+| Contributor  | Student ID | Section | Contribution                                                                  |
+| ------------ | ---------- | ------- | ----------------------------------------------------------------------------- |
+| **M. Hamza** | 23P-XXX    | BCS-7E  | Architecture Engineering, NumPy Autograd, Regularization & Cross-Validation   |
+| **M. Talha** | 23F-0562   | BCS-7E  | Activation Dynamics, Optimizer Benchmarks, Hyperparameter Tuning & Evaluation |
 
 ---
 
 ## Table of Contents
-1. [Executive Summary & Key Report Results](#executive-summary--key-report-results)
-2. [Dataset Pipeline & Partitioning](#dataset-pipeline--partitioning)
-3. [Experimental Suite & Empirical Findings](#experimental-suite--empirical-findings)
-   - [Part 1: NumPy MLP & Gradient Verification](#part-1-numpy-mlp-and-gradient-verification)
-   - [Part 2: Activation Functions & Gradient Flow Analysis](#part-2-activation-functions-and-gradient-flow-analysis)
-   - [Part 3: Loss Function Comparison & Tabular Regression](#part-3-loss-function-comparison-and-tabular-regression)
-   - [Part 4: Optimizer Trajectory & Learning Rate Sensitivity](#part-4-optimizer-trajectory-and-learning-rate-sensitivity)
-   - [Part 5: Controlled Overfitting & Variance Analysis](#part-5-controlled-overfitting-and-variance-analysis)
-   - [Part 6: Regularization Ablation Study](#part-6-regularization-ablation-study)
-   - [Part 7: Hyperparameter Tuning via 5-Fold Cross-Validation](#part-7-hyperparameter-tuning-via-5-fold-cross-validation)
-4. [Repository Architecture](#repository-architecture)
-5. [Environment Setup & Installation](#environment-setup--installation)
-6. [Step-by-Step Reproduction Guide](#step-by-step-reproduction-guide)
-7. [Citation](#citation)
+
+* [Executive Summary](#executive-summary)
+* [Dataset & Partitioning](#dataset--partitioning)
+* [Experimental Results](#experimental-results)
+
+  * [Part 1 — NumPy MLP & Gradient Verification](#part-1--numpy-mlp--gradient-verification)
+  * [Part 2 — Activation Functions](#part-2--activation-functions)
+  * [Part 3 — Loss Functions & Regression](#part-3--loss-functions--regression)
+  * [Part 4 — Optimizers & Learning Rate Sensitivity](#part-4--optimizers--learning-rate-sensitivity)
+  * [Part 5 — Controlled Overfitting](#part-5--controlled-overfitting)
+  * [Part 6 — Regularization Ablation](#part-6--regularization-ablation)
+  * [Part 7 — Hyperparameter Tuning](#part-7--hyperparameter-tuning)
+* [Repository Structure](#repository-structure)
+* [Installation](#installation)
+* [Reproduction Guide](#reproduction-guide)
+* [Citation](#citation)
 
 ---
 
-## Executive Summary & Key Report Results
+# Executive Summary
 
-This repository contains the official codebase, experiment logs, and reproduction scripts for our empirical evaluation of Multilayer Perceptrons (MLPs) on the **Fashion-MNIST** benchmark and the **Diabetes** tabular regression dataset[cite: 3].
+This repository contains the implementation, experiment scripts, and results for an empirical study of **Multi-Layer Perceptrons (MLPs)** on the **Fashion-MNIST** classification benchmark and the **Diabetes** tabular regression dataset.
 
-### Summary of Empirical Metrics[cite: 3]
-* **Analytical Gradient Equivalence:** Manual backpropagation in pure NumPy matched PyTorch `autograd` tensor gradients with a maximum absolute discrepancy of **$5.04 \times 10^{-8}$**[cite: 3].
-* **Activation Performance & Dead Neurons:** Leaky ReLU attained the highest validation accuracy of **$89.48\%$**, outperforming standard ReLU (**$89.25\%$**)[cite: 3]. Standard ReLU exhibited an **$8.85\%$ permanent dead neuron rate** across validation evaluation[cite: 3]. Sigmoid displayed severe gradient vanishing ($6.40 \times 10^{-5}$ mean absolute gradient versus $7.28 \times 10^{-4}$ for ReLU)[cite: 3].
-* **Loss Function Comparison:** Cross-entropy ($89.25\%$) and Mean Squared Error ($89.27\%$) achieved nearly identical classification validation accuracy[cite: 3]. A continuous tabular regression baseline on the Diabetes dataset yielded **MSE = 3390.37, RMSE = 58.23, and MAE = 49.30**[cite: 3].
-* **Optimization Speed:** At $\eta = 0.001$, Adam was the fastest optimizer, achieving $\ge 85\%$ validation accuracy within **2 epochs** and peaking at **$89.25\%$**[cite: 3]. Tuned SGD ($\eta = 0.05$) improved from an initial $49.89\%$ up to $85.68\%$, while tuned Momentum ($\eta = 0.01$) improved from $81.03\%$ to $88.07\%$[cite: 3].
-* **Generalization Gap Induction:** By training a deep 5-layer MLP ($784 \to 512 \times 4 \to 10$) on an intentionally restricted subset of $N=2,000$ samples, the model achieved **$99.10\%$** training accuracy against **$82.05\%$** validation accuracy—producing a massive **$17.05$ percentage-point generalization gap** indicative of high variance[cite: 3].
-* **Regularization Impact:** Evaluated on the $N=2,000$ sample regime, Dropout ($p=0.5$) and Data Augmentation reduced the baseline generalization gap of $6.96$ pp down to **$0.65$ pp** and **$1.21$ pp**, respectively[cite: 3]. $L_1$ regularization ($\lambda = 10^{-5}$) provided the most balanced trade-off, lowering the gap to **$1.69$ pp** with only a modest decrease in training accuracy[cite: 3].
-* **Optimal Model & Test Performance:** 5-fold cross-validation over 12 configurations selected an optimal architecture of `width = (256, 256)`, `lr = 0.001`, and `dropout = 0.2` (scoring a CV mean of **$87.86\% \pm 0.25\%$**)[cite: 3]. When retrained on the full 48,000-sample training partition and evaluated on the untouched 10,000-sample test vault, the model achieved **$89.26\%$ Test Accuracy**, **$0.8922$ Macro Precision**, **$0.8926$ Macro Recall**, and **$0.8919$ Macro F1-score**, exceeding the Part 2 baseline by **$+0.97$ percentage points**[cite: 3].
+### Key Results
 
----
+* **Gradient Verification:** NumPy backpropagation matched PyTorch autograd with a maximum absolute difference of **5.04 × 10⁻⁸**.
+* **Best Activation:** Leaky ReLU achieved **89.48%** validation accuracy, slightly outperforming ReLU at **89.25%**.
+* **Dead ReLU Units:** **8.85%** of evaluated ReLU hidden units remained inactive across the entire validation set.
+* **Vanishing Gradients:** Sigmoid produced a mean first-layer gradient magnitude of **6.40 × 10⁻⁵**, compared with **7.28 × 10⁻⁴** for ReLU.
+* **Loss Comparison:** Cross-Entropy and MSE achieved **89.25%** and **89.27%** validation accuracy, respectively.
+* **Best Optimizer:** Adam reached **85%+ validation accuracy in 2 epochs** and achieved **89.25%** validation accuracy.
+* **Overfitting:** A 5-layer MLP trained on only 2,000 samples reached **99.10% training accuracy** but only **82.05% validation accuracy**, producing a **17.05 percentage-point generalization gap**.
+* **Regularization:** Dropout with `p = 0.5` reduced the generalization gap to **0.65 pp**, while L1 regularization reduced it to **1.69 pp**.
+* **Best Regularization Accuracy:** Increasing the training set to 20,000 samples achieved **86.82% validation accuracy**.
+* **Best Tuned Model:** 5-fold cross-validation selected:
 
-## Dataset Pipeline & Partitioning
-
-Fashion-MNIST inputs ($28 \times 28$ grayscale pixels flattened to 784 dimensions) are normalized to the range $[0, 1]$[cite: 3]. To prevent data leakage, the partition splits are strictly held as:
-
-$$\text{Fashion-MNIST (70,000)} = \begin{cases} \mathcal{D}_{\text{train}}: & 48,000 \text{ samples (80\% of dev set)} \text{[cite: 1, 3]} \\ \mathcal{D}_{\text{val}}: & 12,000 \text{ samples (20\% of dev set)} \text{[cite: 1, 3]} \\ \mathcal{D}_{\text{test}}: & 10,000 \text{ samples (held-out evaluation vault)} \text{[cite: 1, 3]} \end{cases}$$
-
-Class balance across all 10 target categories is preserved with exact stratification[cite: 1]:
-* 4,800 training samples per class[cite: 1]
-* 1,200 validation samples per class[cite: 1]
-* 1,000 test samples per class[cite: 1]
-
----
-
-## Experimental Suite & Empirical Findings
-
-### Part 1: NumPy MLP and Gradient Verification[cite: 3]
-* **Implementation:** A 2-layer MLP ($784 \to 64 \to 10$) written from scratch in NumPy using vectorized matrix operations, He (Kaiming) weight initialization, ReLU hidden activations, numerically stable Softmax, and Cross-Entropy loss[cite: 1, 3].
-* **Training Dynamics:** Mini-batch gradient descent reduced training loss from **1.2994** in Epoch 1 down to **0.4919** in Epoch 10[cite: 3].
-* **Gradient Sanity Check:** NumPy analytical Jacobians were compared against PyTorch automatic differentiation on identical tensors[cite: 3]:
-  * Maximum absolute discrepancy across parameter tensors: **$5.04 \times 10^{-8}$**[cite: 3]
-  * Validates exact mathematical derivation to floating-point precision[cite: 3].
-
-### Part 2: Activation Functions and Gradient Flow Analysis[cite: 3]
-* **Evaluated Functions:** Sigmoid, Tanh, ReLU, and Leaky ReLU ($\alpha = 0.01$) on a $784 \to 128 \to 64 \to 10$ architecture using Adam ($\eta = 0.001$, batch size 256)[cite: 1, 3].
-* **Vanishing Gradient Verification:**
-  * First-layer mean absolute gradient norm for Sigmoid: **$6.40 \times 10^{-5}$**[cite: 3]
-  * First-layer mean absolute gradient norm for ReLU: **$7.28 \times 10^{-4}$**[cite: 3]
-  * Sigmoid experienced an order-of-magnitude reduction in gradient magnitude due to saturation at high and low activation regimes[cite: 3].
-* **Validation Accuracy & Dying ReLUs:**
-  * Leaky ReLU: **$89.48\%$** (Best performer)[cite: 3]
-  * ReLU: **$89.25\%$**[cite: 3]
-  * Tanh: **$88.47\%$**[cite: 1]
-  * Sigmoid: **$88.28\%$**[cite: 1]
-  * **$8.85\%$** of evaluated ReLU hidden units output zero across every single sample in the validation dataset, demonstrating dead neuron vulnerability[cite: 3].
-
-### Part 3: Loss Function Comparison and Tabular Regression[cite: 3]
-* **Classification Loss Benchmark (Fashion-MNIST):**
-  * Cross-Entropy: **$89.25\%$** validation accuracy[cite: 3]
-  * Mean Squared Error: **$89.27\%$** validation accuracy[cite: 3]
-  * While MSE performed on par under Adam on this balanced benchmark, Cross-Entropy provides linear error-proportional gradient flow ($\nabla_z \mathcal{L} = p - y$), avoiding the vanishing gradient traps caused by Softmax derivative terms in MSE[cite: 3].
-* **Continuous Tabular Regression (Diabetes Dataset):**
-  * Architecture: $10 \to 32 \to 16 \to 1$ MLP trained using MSE loss for 100 epochs[cite: 1].
-  * **Mean Squared Error (MSE):** `3390.37`[cite: 3]
-  * **Root Mean Squared Error (RMSE):** `58.23`[cite: 3]
-  * **Mean Absolute Error (MAE):** `49.30`[cite: 3]
-
-### Part 4: Optimizer Trajectory and Learning Rate Sensitivity[cite: 3]
-Evaluated across 8 epochs on the baseline architecture ($784 \to 128 \to 64 \to 10$)[cite: 1]:
-
-| Optimizer | Common $\eta = 0.001$ Acc | Epochs to $\ge 85\%$ (Common $\eta$) | Tuned $\eta$ | Tuned Final Val Acc | Epochs to $\ge 85\%$ (Tuned $\eta$) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Adam**[cite: 3] | **$89.25\%$**[cite: 3] | **2**[cite: 3] | 0.001[cite: 1] | **$87.04\%$**[cite: 1] | **3**[cite: 1] |
-| **RMSprop**[cite: 3] | $88.53\%$[cite: 3] | 4[cite: 3] | 0.001[cite: 1] | $87.29\%$[cite: 1] | 6[cite: 1] |
-| **Momentum (0.9)**[cite: 1, 3] | $81.03\%$[cite: 3] | Failed[cite: 1] | 0.010[cite: 1] | $88.07\%$[cite: 3] | 7[cite: 1] |
-| **SGD**[cite: 3] | $49.89\%$[cite: 3] | Failed[cite: 1] | 0.050[cite: 1, 3] | $85.68\%$[cite: 3] | >8[cite: 1] |
-
-### Part 5: Controlled Overfitting and Variance Analysis[cite: 3]
-* **Experimental Condition:** Subsampled dataset ($N=2,000$ training points) paired with an overparameterized 5-layer MLP ($784 \to 512 \to 512 \to 512 \to 512 \to 10$) trained without regularization for 53 epochs[cite: 1, 3].
-* **Results:**
-  * Training Accuracy: **$99.10\%$**[cite: 3]
-  * Validation Accuracy: **$82.05\%$**[cite: 3]
-  * Generalization Gap: **$17.05$ percentage points**[cite: 3]
-* **Diagnostic Finding:** Divergence occurred around Epoch 45[cite: 1]. The massive generalization gap confirms extreme high variance and memorization of training instances[cite: 3].
-
-### Part 6: Regularization Ablation Study[cite: 3]
-Benchmarking 12 regularization runs on the $N=2,000$ training set (20 epochs max, early stopping patience = 3)[cite: 1, 3]:
-
-| Regularization Method | Setting / Hyperparameter | Train Accuracy | Validation Accuracy | Generalization Gap | Status / Observation |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **Baseline**[cite: 3] | No regularization[cite: 1] | $88.55\%$[cite: 1] | $81.59\%$[cite: 1] | $6.96$ pp[cite: 3] | Reference model[cite: 1] |
-| **$L_2$ Weight Decay**[cite: 1] | $\lambda = 10^{-4}$[cite: 1] | $85.85\%$[cite: 1] | $79.62\%$[cite: 1] | $6.23$ pp[cite: 1] | Stopped at epoch 16[cite: 1] |
-| **$L_2$ Weight Decay**[cite: 1] | $\lambda = 10^{-3}$[cite: 1] | $86.65\%$[cite: 1] | $81.15\%$[cite: 1] | $5.50$ pp[cite: 1] | Stopped at epoch 18[cite: 1] |
-| **$L_2$ Weight Decay**[cite: 3] | $\lambda = 10^{-2}$[cite: 3] | $75.90\%$[cite: 1] | $72.49\%$[cite: 1] | $3.41$ pp[cite: 1] | Over-penalized capacity; least helpful[cite: 3] |
-| **$L_1$ Penalty (Lasso)**[cite: 1, 3] | $\lambda = 10^{-5}$[cite: 1, 3] | $82.05\%$[cite: 1] | $80.36\%$[cite: 1] | **$1.69$ pp**[cite: 3] | **Best trade-off**; induced $28.02\%$ parameter sparsity[cite: 1, 3] |
-| **Dropout**[cite: 1] | $p = 0.2$[cite: 1] | $87.75\%$[cite: 1] | $81.33\%$[cite: 1] | $6.42$ pp[cite: 1] | Mild variance reduction[cite: 1] |
-| **Dropout**[cite: 3] | $p = 0.5$[cite: 3] | $81.35\%$[cite: 1] | $80.70\%$[cite: 1] | **$0.65$ pp**[cite: 3] | **Lowest positive gap**; sacrificed some train accuracy[cite: 3] |
-| **Dropout**[cite: 3] | $p = 0.7$[cite: 3] | $63.70\%$[cite: 1] | $69.20\%$[cite: 1] | **$-5.50$ pp**[cite: 1] | Over-regularized; severe signal destruction[cite: 3] |
-| **Batch Normalization**[cite: 3] | BatchNorm1d per layer[cite: 1] | $96.80\%$[cite: 1] | $81.05\%$[cite: 1] | $15.75$ pp[cite: 1] | Accelerated convergence (stopped @ ep 7), but overfit[cite: 1, 3] |
-| **Early Stopping**[cite: 1] | Patience = 3 epochs[cite: 1] | $88.55\%$[cite: 1] | $81.59\%$[cite: 1] | $6.96$ pp[cite: 1] | Prevented late-stage degradation[cite: 1] |
-| **Data Augmentation**[cite: 3] | Random crop & flip[cite: 1] | $81.25\%$[cite: 1] | $80.04\%$[cite: 1] | **$1.21$ pp**[cite: 3] | Effective synthetic variance reduction[cite: 3] |
-| **Data Scaling (Mid)**[cite: 1] | $N = 10,000$[cite: 1] | $87.61\%$[cite: 1] | $83.97\%$[cite: 1] | $3.63$ pp[cite: 1] | Clear variance reduction via data scaling[cite: 1] |
-| **Data Scaling (High)**[cite: 1] | $N = 20,000$[cite: 1] | $91.81\%$[cite: 1] | **$86.82\%$**[cite: 1] | $4.99$ pp[cite: 1] | **Highest accuracy** among all regularization regimes[cite: 1] |
-
-### Part 7: Hyperparameter Tuning via 5-Fold Cross-Validation[cite: 3]
-* **Methodology:** Random search across 12 hyperparameter configurations spanning learning rates ($\eta \in [10^{-2}, 10^{-4}]$), layer architectures (widths: `(128, 64)`, `(256, 256)`, `(512, 256)`), dropout rates ($p \in [0.0, 0.5]$), and weight decay ($\lambda \in [0.0, 10^{-3}]$)[cite: 3].
-* **Cross-Validation Result:** Evaluated on the 48,000 training partition using 5-fold stratified cross-validation[cite: 3].
-  * **Top Configuration:** `learning_rate = 0.001`, `hidden_widths = (256, 256)`, `dropout = 0.2`, `weight_decay = 0.0`[cite: 3]
-  * **5-Fold Cross-Validation Mean Accuracy:** **$87.86\% \pm 0.25\%$**[cite: 3]
-* **Held-Out Test Set Evaluation:** The optimal model was retrained on all 48,000 training examples and evaluated once on the untouched 10,000-sample test vault[cite: 3]:
-  * **Test Accuracy:** **$89.26\%$**[cite: 3]
-  * **Macro Precision:** **$0.8922$**[cite: 3]
-  * **Macro Recall:** **$0.8926$**[cite: 3]
-  * **Macro F1-Score:** **$0.8919$**[cite: 3]
-  * **Improvement:** Outperformed the Part 2 baseline by **$+0.97$ percentage points**[cite: 3].
+  * Hidden widths: `(256, 256)`
+  * Learning rate: `0.001`
+  * Dropout: `0.2`
+  * Weight decay: `0.0`
+* **Cross-Validation:** **87.86% ± 0.25%**
+* **Final Test Accuracy:** **89.26%**
+* **Macro Precision:** **0.8922**
+* **Macro Recall:** **0.8926**
+* **Macro F1:** **0.8919**
 
 ---
 
-## Repository Architecture
+# Dataset & Partitioning
+
+The primary dataset is **Fashion-MNIST**, containing 70,000 grayscale images of size `28 × 28`.
+
+Each image is flattened into a **784-dimensional vector** and normalized to `[0, 1]`.
+
+To prevent test-set leakage, the dataset was partitioned as follows:
+
+| Split      |    Samples |     Percentage |
+| ---------- | ---------: | -------------: |
+| Training   |     48,000 | 68.6% of total |
+| Validation |     12,000 | 17.1% of total |
+| Test       |     10,000 | 14.3% of total |
+| **Total**  | **70,000** |       **100%** |
+
+The original 60,000-image development set was split using stratification:
+
+* **4,800 training samples per class**
+* **1,200 validation samples per class**
+* **1,000 test samples per class**
+
+The final 10,000-image test set remains untouched until final evaluation.
+
+---
+
+# Experimental Results
+
+## Part 1 — NumPy MLP & Gradient Verification
+
+A two-layer MLP was implemented from scratch using NumPy:
+
+```text
+784 → 64 → 10
+```
+
+### Implementation
+
+The model uses:
+
+* Vectorized NumPy operations
+* He/Kaiming weight initialization
+* ReLU activation
+* Numerically stable Softmax
+* Cross-Entropy loss
+* Manual forward and backward propagation
+* Mini-batch gradient descent
+
+### Training
+
+Training loss decreased from:
+
+```text
+Epoch 1  →  1.2994
+Epoch 10 →  0.4919
+```
+
+### Gradient Verification
+
+The analytical NumPy gradients were compared against PyTorch's automatic differentiation using identical tensors.
+
+**Maximum absolute difference:**
+
+```text
+5.04 × 10⁻⁸
+```
+
+This confirms that the manually derived gradients match PyTorch autograd to floating-point precision.
+
+---
+
+## Part 2 — Activation Functions
+
+Four activation functions were evaluated using the architecture:
+
+```text
+784 → 128 → 64 → 10
+```
+
+with:
+
+* Adam optimizer
+* Learning rate: `0.001`
+* Batch size: `256`
+
+### Validation Accuracy
+
+| Activation     | Validation Accuracy |
+| -------------- | ------------------: |
+| **Leaky ReLU** |          **89.48%** |
+| ReLU           |              89.25% |
+| Tanh           |              88.47% |
+| Sigmoid        |              88.28% |
+
+### Gradient Flow
+
+The first-layer mean absolute gradient magnitudes were:
+
+| Activation | Mean Absolute Gradient |
+| ---------- | ---------------------: |
+| Sigmoid    |          `6.40 × 10⁻⁵` |
+| ReLU       |          `7.28 × 10⁻⁴` |
+
+The substantially smaller gradient magnitude for Sigmoid demonstrates its susceptibility to **vanishing gradients**, particularly in saturated activation regions.
+
+### Dead ReLU Analysis
+
+Approximately **8.85%** of evaluated ReLU hidden units produced zero output for every validation sample.
+
+This demonstrates the potential **dying ReLU** problem and explains why Leaky ReLU can provide more robust gradient flow.
+
+---
+
+## Part 3 — Loss Functions & Regression
+
+### Fashion-MNIST Classification
+
+Cross-Entropy and Mean Squared Error were compared under the same training conditions.
+
+| Loss Function | Validation Accuracy |
+| ------------- | ------------------: |
+| Cross-Entropy |              89.25% |
+| MSE           |              89.27% |
+
+Although MSE performed similarly in this experiment, Cross-Entropy remains the more appropriate standard loss for multi-class classification because its gradient with Softmax simplifies to:
+
+```text
+∇z L = p - y
+```
+
+This provides a more direct error signal than applying MSE through the Softmax derivative.
+
+### Diabetes Regression
+
+A separate MLP was trained on the Diabetes tabular regression dataset.
+
+Architecture:
+
+```text
+10 → 32 → 16 → 1
+```
+
+Training used MSE loss for 100 epochs.
+
+| Metric   |      Result |
+| -------- | ----------: |
+| **MSE**  | **3390.37** |
+| **RMSE** |   **58.23** |
+| **MAE**  |   **49.30** |
+
+---
+
+## Part 4 — Optimizers & Learning Rate Sensitivity
+
+Four optimization strategies were evaluated on the baseline architecture:
+
+```text
+784 → 128 → 64 → 10
+```
+
+### Optimizer Comparison
+
+| Optimizer | Accuracy @ 0.001 | Epochs to ≥85% | Tuned LR | Tuned Final Accuracy |
+| --------- | ---------------: | -------------: | -------: | -------------------: |
+| **Adam**  |       **89.25%** |          **2** |    0.001 |               87.04% |
+| RMSprop   |           88.53% |              4 |    0.001 |               87.29% |
+| Momentum  |           81.03% |         Failed |    0.010 |           **88.07%** |
+| SGD       |           49.89% |         Failed |    0.050 |           **85.68%** |
+
+Adam demonstrated the fastest convergence using the common learning rate of `0.001`.
+
+Learning-rate tuning significantly improved both SGD and Momentum.
+
+---
+
+## Part 5 — Controlled Overfitting
+
+To deliberately induce high variance, an overparameterized five-layer MLP was trained using only **2,000 training samples**.
+
+Architecture:
+
+```text
+784 → 512 → 512 → 512 → 512 → 10
+```
+
+The model was trained without regularization for 53 epochs.
+
+### Results
+
+| Metric              |       Result |
+| ------------------- | -----------: |
+| Training Accuracy   |   **99.10%** |
+| Validation Accuracy |   **82.05%** |
+| Generalization Gap  | **17.05 pp** |
+
+The divergence became noticeable around **Epoch 45**.
+
+The large gap demonstrates strong memorization and high model variance caused by the combination of limited training data and excessive model capacity.
+
+---
+
+# Part 6 — Regularization Ablation
+
+Regularization techniques were evaluated using the 2,000-sample training regime.
+
+The experiments were limited to 20 epochs with early stopping patience of 3.
+
+| Method              | Setting      | Train Acc. |  Val. Acc. |         Gap |
+| ------------------- | ------------ | ---------: | ---------: | ----------: |
+| Baseline            | None         |     88.55% |     81.59% |     6.96 pp |
+| L2                  | λ = 10⁻⁴     |     85.85% |     79.62% |     6.23 pp |
+| L2                  | λ = 10⁻³     |     86.65% |     81.15% |     5.50 pp |
+| L2                  | λ = 10⁻²     |     75.90% |     72.49% |     3.41 pp |
+| **L1**              | **λ = 10⁻⁵** | **82.05%** | **80.36%** | **1.69 pp** |
+| Dropout             | p = 0.2      |     87.75% |     81.33% |     6.42 pp |
+| **Dropout**         | **p = 0.5**  | **81.35%** | **80.70%** | **0.65 pp** |
+| Dropout             | p = 0.7      |     63.70% |     69.20% |    -5.50 pp |
+| Batch Normalization | BatchNorm1d  |     96.80% |     81.05% |    15.75 pp |
+| Early Stopping      | Patience = 3 |     88.55% |     81.59% |     6.96 pp |
+| Data Augmentation   | Crop + Flip  |     81.25% |     80.04% |     1.21 pp |
+| Data Scaling        | N = 10,000   |     87.61% |     83.97% |     3.63 pp |
+| Data Scaling        | N = 20,000   |     91.81% | **86.82%** |     4.99 pp |
+
+### Key Findings
+
+* **Dropout `p = 0.5`** produced the smallest positive generalization gap at **0.65 pp**.
+* **L1 regularization** achieved a strong balance between training and validation performance with a **1.69 pp gap**.
+* L1 produced approximately **28.02% parameter sparsity**.
+* **Dropout `p = 0.7`** over-regularized the model and caused underfitting.
+* Batch normalization accelerated convergence but still produced a large **15.75 pp** generalization gap.
+* Increasing the training set to **20,000 samples** produced the highest validation accuracy in this ablation study at **86.82%**.
+
+---
+
+# Part 7 — Hyperparameter Tuning
+
+A random search was performed over **12 configurations** using 5-fold stratified cross-validation.
+
+The search explored:
+
+* Learning rates from `10⁻⁴` to `10⁻²`
+* Hidden-layer configurations:
+
+  * `(128, 64)`
+  * `(256, 256)`
+  * `(512, 256)`
+* Dropout rates from `0.0` to `0.5`
+* Weight decay from `0.0` to `10⁻³`
+
+### Best Configuration
+
+```text
+Learning Rate : 0.001
+Hidden Widths: (256, 256)
+Dropout      : 0.2
+Weight Decay : 0.0
+```
+
+### Cross-Validation
+
+```text
+87.86% ± 0.25%
+```
+
+The selected architecture was then retrained using the complete 48,000-sample training partition and evaluated once on the untouched 10,000-sample test set.
+
+### Final Test Results
+
+| Metric              |     Result |
+| ------------------- | ---------: |
+| **Accuracy**        | **89.26%** |
+| **Macro Precision** | **0.8922** |
+| **Macro Recall**    | **0.8926** |
+| **Macro F1**        | **0.8919** |
+
+The final tuned model improved upon the Part 2 baseline by **0.97 percentage points**.
+
+---
+
+# Repository Structure
 
 ```text
 .
-├── README.md                           # Master project documentation
-├── requirements.txt                    # Pinned Python package dependencies
-├── environment.yml                     # Conda reproducible environment definition
-├── data/                               # Local dataset folder (auto-download fallback)
-│   ├── fashion-mnist_train.csv         # Train split (optional CSV path)[cite: 1]
-│   └── fashion-mnist_test.csv          # Test split (optional CSV path)[cite: 1]
-├── src/                                # Modular source code library
+├── README.md
+├── requirements.txt
+├── environment.yml
+│
+├── data/
+│   ├── fashion-mnist_train.csv
+│   └── fashion-mnist_test.csv
+│
+├── src/
 │   ├── __init__.py
-│   ├── config.py                       # Global parameters, seeds (42), device selector[cite: 1, 3]
-│   ├── data_loader.py                  # Stratified 80/20 train-val pipeline and test loader[cite: 1, 3]
-│   ├── numpy_mlp.py                    # Hand-coded 2-layer NumPy MLP with autograd gradient check[cite: 1, 3]
-│   ├── models.py                       # Modular PyTorch MLPClassifier supporting Dropout & BatchNorm[cite: 1]
-│   ├── trainer.py                      # Training loop with validation tracking, L1 penalty & early stopping[cite: 1]
-│   └── utils.py                        # Metrics calculator, dead unit analyzer, and plotting functions[cite: 1]
-├── experiments/                        # Standalone execution scripts for assignment parts
-│   ├── run_part1_grad_check.py         # NumPy backprop parity vs PyTorch autograd[cite: 1, 3]
-│   ├── run_part2_activations.py        # Activation comparison & dead ReLU diagnostic[cite: 1, 3]
-│   ├── run_part3_loss_regression.py    # CE vs MSE classification & Diabetes tabular regression[cite: 1, 3]
-│   ├── run_part4_optimizers.py         # Optimizer convergence and learning rate sensitivity[cite: 1, 3]
-│   ├── run_part5_overfitting_gap.py    # Sample reduction (N=2000) & generalization gap study[cite: 1, 3]
-│   ├── run_part6_regularization.py     # 12-run regularization ablation suite[cite: 1, 3]
-│   └── run_part7_kfold_tuning.py       # 5-fold CV hyperparameter search and test evaluation[cite: 3]
+│   ├── config.py
+│   ├── data_loader.py
+│   ├── numpy_mlp.py
+│   ├── models.py
+│   ├── trainer.py
+│   └── utils.py
+│
+├── experiments/
+│   ├── run_part1_grad_check.py
+│   ├── run_part2_activations.py
+│   ├── run_part3_loss_regression.py
+│   ├── run_part4_optimizers.py
+│   ├── run_part5_overfitting_gap.py
+│   ├── run_part6_regularization.py
+│   └── run_part7_kfold_tuning.py
+│
 └── notebooks/
-    └── DLP_Assignment01.ipynb          # Original Jupyter notebook with complete cell execution history[cite: 1]
+    └── DLP_Assignment01.ipynb
 ```
+
+### Source Modules
+
+| File             | Purpose                                                     |
+| ---------------- | ----------------------------------------------------------- |
+| `config.py`      | Global configuration, random seed, and device selection     |
+| `data_loader.py` | Dataset loading and stratified train/validation splitting   |
+| `numpy_mlp.py`   | NumPy MLP and analytical gradient verification              |
+| `models.py`      | PyTorch MLP architectures                                   |
+| `trainer.py`     | Training, validation, L1 regularization, and early stopping |
+| `utils.py`       | Metrics, dead-neuron analysis, and visualization utilities  |
 
 ---
 
-## Environment Setup & Installation
+# Installation
 
-### Option 1: Using Conda (Recommended)
+## Option 1 — Conda
+
 ```bash
-git clone [https://github.com/](https://github.com/)<your-repo>/dlp-fashion-mnist-mlp.git
+git clone https://github.com/<your-username>/dlp-fashion-mnist-mlp.git
 cd dlp-fashion-mnist-mlp
 
 conda env create -f environment.yml
 conda activate dlp-assignment1
 ```
 
-### Option 2: Using standard Python venv
+## Option 2 — Python Virtual Environment
+
+### Linux / macOS
+
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Dependency Manifest (`requirements.txt`)
+### Windows
+
+```powershell
+python -m venv venv
+venv\Scripts\activate
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+## Dependencies
+
 ```text
 torch>=2.0.0
 torchvision>=0.15.0
@@ -215,63 +454,134 @@ tqdm>=4.65.0
 
 ---
 
-## Step-by-Step Reproduction Guide
+# Reproduction Guide
 
-Execute each experiment script from the project root to reproduce the numerical results from the report[cite: 3]:
+All experiment scripts should be executed from the repository root.
 
-### 1. Verify Analytical Gradient Parity
+## 1. Gradient Verification
+
 ```bash
 python experiments/run_part1_grad_check.py
 ```
-*Expected Result:* NumPy loss drops from $1.2994$ to $0.4919$, and max absolute difference vs PyTorch autograd is $\le 5.04 \times 10^{-8}$[cite: 3].
 
-### 2. Run Activation Dynamics & Dead Neuron Diagnostic
+Expected:
+
+```text
+Epoch 1 loss  ≈ 1.2994
+Epoch 10 loss ≈ 0.4919
+Max gradient difference ≤ 5.04 × 10⁻⁸
+```
+
+## 2. Activation Analysis
+
 ```bash
 python experiments/run_part2_activations.py
 ```
-*Expected Result:* Leaky ReLU reaches $89.48\%$ validation accuracy, ReLU reaches $89.25\%$, and dead ReLU unit percentage outputs $\approx 8.85\%$[cite: 3].
 
-### 3. Compare Loss Functions & Run Diabetes Regression
+Expected:
+
+```text
+Leaky ReLU ≈ 89.48%
+ReLU       ≈ 89.25%
+Dead ReLU  ≈ 8.85%
+```
+
+## 3. Loss & Regression Experiments
+
 ```bash
 python experiments/run_part3_loss_regression.py
 ```
-*Expected Result:* CE val accuracy is $89.25\%$, MSE val accuracy is $89.27\%$, and Diabetes regression outputs MSE = $3390.37$, RMSE = $58.23$, MAE = $49.30$[cite: 3].
 
-### 4. Evaluate Optimizer Convergence
+Expected:
+
+```text
+Cross-Entropy ≈ 89.25%
+MSE           ≈ 89.27%
+
+Diabetes:
+MSE  = 3390.37
+RMSE = 58.23
+MAE  = 49.30
+```
+
+## 4. Optimizer Experiments
+
 ```bash
 python experiments/run_part4_optimizers.py
 ```
-*Expected Result:* Adam reaches $\ge 85\%$ in 2 epochs (ending at $89.25\%$), RMSprop in 4 epochs ($88.53\%$), and tuned Momentum ($\eta=0.01$) reaches $88.07\%$[cite: 3].
 
-### 5. Reproduce Generalization Gap (Overfitting Stress-Test)
+Expected:
+
+```text
+Adam      → 89.25%
+RMSprop   → 88.53%
+Momentum  → 88.07% (tuned)
+SGD       → 85.68% (tuned)
+```
+
+## 5. Overfitting Experiment
+
 ```bash
 python experiments/run_part5_overfitting_gap.py
 ```
-*Expected Result:* Trains for 53 epochs on $N=2,000$ points, achieving $99.10\%$ train accuracy and $82.05\%$ val accuracy ($17.05$ pp generalization gap)[cite: 3].
 
-### 6. Run Full Regularization Ablation
+Expected:
+
+```text
+Training Accuracy   ≈ 99.10%
+Validation Accuracy ≈ 82.05%
+Generalization Gap  ≈ 17.05 pp
+```
+
+## 6. Regularization Experiments
+
 ```bash
 python experiments/run_part6_regularization.py
 ```
-*Expected Result:* Re-evaluates all 12 regularization configurations; confirms Dropout ($p=0.5$) gap at $0.65$ pp and $L_1$ gap at $1.69$ pp[cite: 3].
 
-### 7. Run 5-Fold Cross-Validation & Held-Out Test Evaluation
+Expected key results:
+
+```text
+Dropout p=0.5 → 0.65 pp gap
+L1 λ=1e-5     → 1.69 pp gap
+```
+
+## 7. Hyperparameter Search
+
 ```bash
 python experiments/run_part7_kfold_tuning.py
 ```
-*Expected Result:* 5-fold CV selects `(256, 256)` width with `dropout = 0.2` ($87.86\% \pm 0.25\%$ CV score) and achieves $89.26\%$ final test accuracy[cite: 3].
+
+Expected:
+
+```text
+Best Architecture: (256, 256)
+Learning Rate:     0.001
+Dropout:            0.2
+CV Accuracy:        87.86% ± 0.25%
+Test Accuracy:      89.26%
+```
 
 ---
 
-## Citation
+# Citation
+
+If you use this repository in academic work, please cite:
 
 ```bibtex
 @misc{hamza_talha_dlp_assignment1_2026,
-  author = {M. Hamza and M. Talha},
-  title = {Deep Learning for Perception Assignment 1: Fashion-MNIST MLP Experimental Study},
-  year = {2026},
-  month = {September},
-  institution = {FAST-NUCES},
-  note = {Course: Deep Learning for Perception, Section BCS-7E}
+  author       = {M. Hamza and M. Talha},
+  title        = {Deep Learning for Perception Assignment 1:
+                  Fashion-MNIST MLP Experimental Study},
+  year         = {2026},
+  month        = {September},
+  institution  = {FAST-NUCES},
+  note         = {Course: Deep Learning for Perception, Section BCS-7E}
 }
 ```
+
+---
+
+## License
+
+This project is released under the **MIT License**.
